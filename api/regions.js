@@ -1,6 +1,17 @@
 const fetch = require("node-fetch");
 
 module.exports = async (req, res) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    return res.status(200).end();
+  }
+
+  // CORS headers
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
   const { country = "nigeria", mode = "regions", query } = req.query;
 
   const configs = {
@@ -25,6 +36,9 @@ module.exports = async (req, res) => {
   if (mode === "regions") {
     endpoint = `${config.base}/locations/regions`;
   } else if (mode === "search") {
+    if (!query) {
+      return res.status(400).json({ error: "Missing query parameter for search mode" });
+    }
     endpoint = `${config.base}/bsb?search=${encodeURIComponent(query)}`;
   } else {
     endpoint = `${config.base}/bsb`;
@@ -34,7 +48,9 @@ module.exports = async (req, res) => {
 
   try {
     const response = await fetch(url, {
-      headers: { "User-Agent": "Beekeys Proxy" },
+      headers: {
+        "User-Agent": "Beekeys Proxy",
+      },
     });
 
     const data = await response.json();
@@ -42,10 +58,6 @@ module.exports = async (req, res) => {
     if (!response.ok) {
       return res.status(response.status).json({ error: data });
     }
-
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
     res.status(200).json(data);
   } catch (err) {
