@@ -1,3 +1,3 @@
 module.exports = (req, res) => {
-  res.status(200).json({ message: "regions endpoint working" });
+  res.status(200).json({ message: "It works!" });
 };
